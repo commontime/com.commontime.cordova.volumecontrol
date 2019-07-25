@@ -47,13 +47,44 @@
 
 - (void) setDeviceVolume:(CDVInvokedUrlCommand *)command
 {
+   CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    
+    if ([self isBluetoothHeadsetConnected]) {
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        return;
+    };
+    
     if (volumeSlider == nil) {
         [self addVolumeSlider];
     }
     NSString *volume = [command argumentAtIndex:0];
     volumeSlider.value = [volume doubleValue];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (BOOL) isBluetoothHeadsetConnected
+{
+    AVAudioSession *session = [AVAudioSession sharedInstance];
+    AVAudioSessionRouteDescription *routeDescription = [session currentRoute];
+    
+    if (routeDescription)
+    {
+        NSArray *outputs = [routeDescription outputs];
+        
+        if (outputs && [outputs count] > 0)
+        {
+            AVAudioSessionPortDescription *portDescription = [outputs objectAtIndex:0];
+            NSString *portType = [portDescription portType];
+            
+            if (portType && [portType isEqualToString:@"BluetoothA2DPOutput"])
+            {
+                return YES;
+            }
+        }
+    }
+    
+    return NO;
 }
 
 @end
